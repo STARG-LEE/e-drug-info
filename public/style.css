@@ -147,6 +147,22 @@ main.wrap {
   font-size: 0.9rem;
   color: var(--muted);
 }
+.badge {
+  display: inline-block;
+  background: var(--primary-light);
+  color: var(--primary-dark);
+  font-size: 0.72rem;
+  font-weight: 700;
+  padding: 2px 8px;
+  border-radius: 999px;
+  margin-left: 6px;
+  vertical-align: middle;
+}
+.search-hint {
+  margin: 8px 2px 0;
+  font-size: 0.8rem;
+  color: var(--muted);
+}
 .downloads {
   display: flex;
   align-items: center;

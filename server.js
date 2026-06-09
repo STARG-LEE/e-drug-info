@@ -29,6 +29,29 @@ function paginate(items, page, rows) {
   return { slice: items.slice(start, start + numOfRows), pageNo, numOfRows };
 }
 
+// 제품명(itemName) 우선 검색, 0건이면 효능(efcyQesitm)으로 자동 폴백한다.
+async function smartSearch({ q, entp, pageNo, numOfRows }) {
+  const common = { serviceKey: SERVICE_KEY, entpName: entp || undefined };
+  let result = await fetchDrugs({ ...common, itemName: q || undefined, pageNo, numOfRows });
+  let field = 'itemName';
+  if (q && result.totalCount === 0) {
+    const byEfcy = await fetchDrugs({ ...common, efcyQesitm: q, pageNo, numOfRows });
+    if (byEfcy.totalCount > 0) {
+      result = byEfcy;
+      field = 'efcyQesitm';
+    }
+  }
+  return { ...result, field };
+}
+
+// 결정된 검색 필드(itemName/efcyQesitm)에 맞는 API 옵션을 만든다.
+function fieldOpts(q, entp, field) {
+  const o = { serviceKey: SERVICE_KEY, entpName: entp || undefined };
+  if (field === 'efcyQesitm') o.efcyQesitm = q;
+  else o.itemName = q || undefined;
+  return o;
+}
+
 // 한글 파일명을 안전하게 내려보내기 위한 Content-Disposition (RFC 5987)
 function contentDisposition(filename) {
   const ascii = filename.replace(/[^\x20-\x7E]/g, '_');
@@ -55,17 +78,17 @@ app.get('/api/search', async (req, res) => {
     if (DEMO) {
       const all = filterSample(q, entp);
       const { slice, pageNo, numOfRows } = paginate(all, page, rows);
-      return res.json({ demo: true, items: slice, totalCount: all.length, pageNo, numOfRows });
+      return res.json({ demo: true, field: 'mixed', items: slice, totalCount: all.length, pageNo, numOfRows });
     }
-    const result = await fetchDrugs({
-      serviceKey: SERVICE_KEY,
-      itemName: q || undefined,
-      entpName: entp || undefined,
+    const result = await smartSearch({
+      q,
+      entp,
       pageNo: parseInt(page, 10) || 1,
       numOfRows: parseInt(rows, 10) || 10,
     });
     res.json({
       demo: false,
+      field: result.field,
       items: result.items,
       totalCount: result.totalCount,
       pageNo: result.pageNo,
@@ -89,17 +112,19 @@ app.get('/api/download', async (req, res) => {
     if (DEMO) {
       const all = filterSample(q, entp);
       items = scope === 'all' ? all : paginate(all, page, rows).slice;
+    } else if (scope === 'all') {
+      // 제품명/효능 중 어느 필드로 검색할지 1건 probe 후 전체 수집
+      const probe = await smartSearch({ q, entp, pageNo: 1, numOfRows: 1 });
+      items = (await fetchAll(fieldOpts(q, entp, probe.field))).items;
     } else {
-      const opts = { serviceKey: SERVICE_KEY, itemName: q || undefined, entpName: entp || undefined };
-      if (scope === 'all') {
-        items = (await fetchAll(opts)).items;
-      } else {
-        const pageNo = parseInt(page, 10) || 1;
-        const numOfRows = parseInt(rows, 10) || 10;
-        // 단일 페이지는 API 원본(raw) 응답을 그대로 보존해 내려준다.
-        if (format === 'json') rawJson = await fetchDrugsRaw({ ...opts, pageNo, numOfRows, type: 'json' });
-        if (format === 'xml') rawXml = await fetchDrugsRaw({ ...opts, pageNo, numOfRows, type: 'xml' });
-        items = (await fetchDrugs({ ...opts, pageNo, numOfRows })).items;
+      const pageNo = parseInt(page, 10) || 1;
+      const numOfRows = parseInt(rows, 10) || 10;
+      const result = await smartSearch({ q, entp, pageNo, numOfRows });
+      items = result.items;
+      // 단일 페이지는 API 원본(raw) 응답을 그대로 보존해 내려준다.
+      if (format === 'json') rawJson = result.raw;
+      if (format === 'xml') {
+        rawXml = await fetchDrugsRaw({ ...fieldOpts(q, entp, result.field), pageNo, numOfRows, type: 'xml' });
       }
     }
 

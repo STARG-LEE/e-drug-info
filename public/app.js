@@ -1,4 +1,4 @@
-const state = { q: "", entp: "", page: 1, rows: 10, total: 0, demo: false };
+const state = { q: "", entp: "", page: 1, rows: 10, total: 0, demo: false, field: "" };
 
 const $ = (s) => document.querySelector(s);
 const results = $("#results");
@@ -52,6 +52,7 @@ async function search() {
       return x.json();
     });
     state.total = data.totalCount || 0;
+    state.field = data.field;
     render(data.items || []);
   } catch (e) {
     statusEl.innerHTML = `<div class="error">오류: ${escapeHtml(e.message)}</div>`;
@@ -66,7 +67,8 @@ function render(items) {
   statusEl.textContent = "";
   const from = (state.page - 1) * state.rows + 1;
   const to = (state.page - 1) * state.rows + items.length;
-  $("#resultCount").textContent = `총 ${state.total.toLocaleString()}건 중 ${from}–${to}건 표시`;
+  const badge = state.field === "efcyQesitm" ? ` <span class="badge">효능·증상 검색</span>` : "";
+  $("#resultCount").innerHTML = `총 ${state.total.toLocaleString()}건 중 ${from}–${to}건 표시${badge}`;
   toolbar.classList.remove("hidden");
   results.innerHTML = items.map(card).join("");
   renderPagination();
