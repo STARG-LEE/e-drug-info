@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="ko">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>e약은요 · 의약품 정보 검색</title>
+    <link rel="stylesheet" href="style.css" />
+  </head>
+  <body>
+    <header class="site-header">
+      <div class="wrap">
+        <h1>💊 e약은요 의약품 정보 검색</h1>
+        <p>식품의약품안전처 공공데이터 기반 · 효능·용법·주의사항을 검색하고 원본 파일로 다운로드</p>
+      </div>
+    </header>
+
+    <main class="wrap">
+      <details id="keyBar" class="key-bar">
+        <summary>
+          <span id="modeBadge" class="mode-badge demo">데모 모드</span>
+          <span class="key-summary-text">인증키를 입력하면 실데이터로 검색됩니다 · 클릭하여 설정</span>
+        </summary>
+        <div class="key-body">
+          <p>
+            공공데이터포털에서 발급받은 인증키를 입력하면 실제 식약처 데이터로 검색됩니다. 키는
+            <strong>이 브라우저에만</strong> 저장되며(localStorage) 서버나 GitHub로 전송되지 않습니다.
+          </p>
+          <div class="key-row">
+            <input id="keyInput" type="password" placeholder="인증키(Encoding 또는 Decoding) 붙여넣기" autocomplete="off" />
+            <button id="keySave" class="btn btn-primary">저장</button>
+            <button id="keyClear" class="btn btn-ghost">지우기</button>
+          </div>
+          <a href="https://www.data.go.kr/data/15075057/openapi.do" target="_blank" rel="noopener">
+            → 공공데이터포털에서 인증키 발급받기 (무료)
+          </a>
+        </div>
+      </details>
+
+      <div id="demoBanner" class="banner">
+        <strong>데모 모드</strong> — 지금은 샘플 데이터로 동작합니다. 위 <strong>인증키 설정</strong>에 키를
+        입력하면 실제 데이터로 검색됩니다.
+      </div>
+
+      <form id="searchForm" class="search-card">
+        <div class="field">
+          <label for="q">제품명 / 효능 키워드</label>
+          <input id="q" name="q" type="text" placeholder="예: 타이레놀, 두통, 소화" autocomplete="off" />
+        </div>
+        <div class="field">
+          <label for="entp">업체명 (선택)</label>
+          <input id="entp" name="entp" type="text" placeholder="예: 한국얀센" autocomplete="off" />
+        </div>
+        <button type="submit" class="btn btn-primary">검색</button>
+      </form>
+      <p class="search-hint">제품명으로 먼저 찾고, 없으면 효능·증상으로 자동 검색합니다.</p>
+
+      <section id="toolbar" class="toolbar hidden">
+        <div class="result-count" id="resultCount"></div>
+        <div class="downloads">
+          <span class="dl-label">현재 페이지</span>
+          <button class="btn btn-ghost" data-dl="json" data-scope="page">JSON</button>
+          <button class="btn btn-ghost" data-dl="csv" data-scope="page">CSV</button>
+          <button class="btn btn-ghost" data-dl="xml" data-scope="page">원본 XML</button>
+          <span class="dl-sep"></span>
+          <span class="dl-label">전체 결과</span>
+          <button class="btn btn-ghost" data-dl="json" data-scope="all">JSON</button>
+          <button class="btn btn-ghost" data-dl="csv" data-scope="all">CSV</button>
+        </div>
+      </section>
+
+      <div id="status" class="status"></div>
+      <section id="results" class="results"></section>
+      <nav id="pagination" class="pagination hidden"></nav>
+    </main>
+
+    <footer class="site-footer">
+      <div class="wrap">
+        출처: 식품의약품안전처 의약품개요정보(e약은요), 공공데이터포털(data.go.kr) · 이 도구는 정보
+        제공용이며 의학적 판단의 근거로 사용하지 마세요.
+      </div>
+    </footer>
+
+    <script src="app.js"></script>
+  </body>
+</html>
